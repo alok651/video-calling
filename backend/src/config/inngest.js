@@ -1,46 +1,41 @@
 import { Inngest } from "inngest";
 import { connectDB } from "./db.js";
-import User from "../models/user.model.js";
+import { User } from "../models/User.model.js";
 
+// Create Inngest client
+export const inngest = new Inngest({ id: "Whatsup" });
 
-// Create a client to send and receive events
-export const inngest = new Inngest({ id: "video call" });
+// Function: Sync user when created
+const syncUser = inngest.createFunction(
+  { name: "Sync User" },
+  { event: "clerk/user.created" },
+  async ({ event }) => {
+    await connectDB(); // ensure DB connection
 
-const syncUser=inngest.createFunction(
-    {id:"sync-user"},
-    {event:"clerk/user.created"},
-    async({event})=>{
-       await connectDB()
+    const { id, email_addresses, first_name, last_name, image_url } = event.data;
 
+    const newUser = {
+      clerkId: id,
+      email: email_addresses[0]?.email_address || "", // fallback if undefined
+      name: `${first_name || ""} ${last_name || ""}`,
+      image: image_url,
+    };
 
-         const {id,email,first_name,last_name,image_url}=event.data;
-
-         const newUser={
-            clerkId:id,
-            email:email_address[0].email_address,
-            name:`${first_name || ""} ${last_name || ""}`,
-            image:image_url
-         };
-
-         await User.create(newUser);
-
-         //todo: handle more things
-
-    }
+    await User.create(newUser);
+  }
 );
 
-const deleteUserFromDB = inngest.createFunction(
-    { id: "delete-user" },
-    { event: "clerk/user.deleted" },
-    async ({ event }) => {
-        await connectDB();
-        
-        const { id } = event.data;
-        
-        await User.deleteOne({ clerkId: id });
-    }
+// Function: Delete user when deleted
+const deleteUserFromDb = inngest.createFunction(
+  { id: "delete-User-From-Db" },
+  { event: "clerk/user.deleted" },
+  async ({ event }) => {
+    await connectDB();
+
+    const { id } = event.data;
+    await User.deleteOne({ clerkId: id });
+  }
 );
 
-
-// Create an empty array where we'll export future Inngest functions
-export const functions = [syncUser,deleteUserFromDB];
+// Export functions for Express / Vercel serverless
+export const functions = [syncUser, deleteUserFromDb];
