@@ -21,7 +21,7 @@ const syncUser = inngest.createFunction(
       image: image_url,
     };
 
-    await User.create(newuser);
+    await User.create(newUser);
   }
 );
 
