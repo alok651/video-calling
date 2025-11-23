@@ -1,6 +1,7 @@
 import { Inngest } from "inngest";
 import { connectDB } from "./db.js";
 import { User } from "../models/user.model.js";
+import { deleteStreamUser, upsertStreamUser } from "./stream.js";
 
 // Create Inngest client
 export const inngest = new Inngest({ id: "Whatsup" });
@@ -22,6 +23,12 @@ const syncUser = inngest.createFunction(
     };
 
     await User.create(newUser);
+
+await upsertStreamUser({
+  id: newUser.clerkId.toString(),
+  name: newUser.name,
+  image: newUser.image,
+});
   }
 );
 
@@ -34,8 +41,10 @@ const deleteUserFromDb = inngest.createFunction(
 
     const { id } = event.data;
     await User.deleteOne({ clerkId: id });
+
+    await deleteStreamUser(id.toString());
   }
 );
 
 // Export functions for Express / Vercel serverless
-export const functions = [syncUser, deleteUserFromDb];
+export const functions = [syncUser, deleteUserFromDb];    
