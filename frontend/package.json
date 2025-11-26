@@ -12,15 +12,19 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.37.0",
     "@sentry/react": "^10.1.0",
+    "@stream-io/video-react-sdk": "^1.27.2",
+    "@tailwindcss/vite": "^4.1.17",
     "@tanstack/react-query": "^5.83.0",
     "axios": "^1.11.0",
+    "lucide-react": "^0.554.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hot-toast": "^2.5.2",
     "react-router": "^7.6.3",
     "react-router-dom": "^7.9.6",
     "stream-chat": "^9.14.0",
-    "stream-chat-react": "^13.3.0"
+    "stream-chat-react": "^13.3.0",
+    "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
