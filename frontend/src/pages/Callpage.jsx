@@ -1,108 +1,70 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useUser } from "@clerk/clerk-react";
-import toast from "react-hot-toast";
+import { useAuth } from "@clerk/clerk-react";
+import { Navigate, Route, Routes } from "react-router";
+import * as Sentry from "@sentry/react";
 
-import { getStreamToken } from "../../lib/api";
+import AuthPage from "./pages/AuthPage";
+import HomePage from "./pages/HomePage";
+import CallPage from "./pages/CallPage";
 
-import {
-  StreamVideo,
-  StreamVideoClient,
-  StreamCall,
-  CallControls,
-  SpeakerLayout,
-  StreamTheme,
-  CallingState,
-  useCallStateHooks,
-} from "@stream-io/video-react-sdk";
+const SentryRoutes = Sentry.withSentryReactRouterV7Routing(Routes);
 
-import "@stream-io/video-react-sdk/dist/css/styles.css";
+const App = () => {
+  const { isSignedIn, isLoaded } = useAuth();
 
-const STREAM_API_KEY = import.meta.env.VITE_STREAM_API_KEY;
-
-const CallPage = () => {
-  const { id: callId } = useParams();
-  const { user, isLoaded } = useUser();
-
-  const [client, setClient] = useState(null);
-  const [call, setCall] = useState(null);
-  const [isConnecting, setIsConnecting] = useState(true);
-
-  const { data: tokenData } = useQuery({
-    queryKey: ["streamToken"],
-    queryFn: getStreamToken,
-    enabled: !!user,
-  });
-
-  useEffect(() => {
-    const initCall = async () => {
-      if (!tokenData.token || !user || !callId) return;
-
-      try {
-        const videoClient = new StreamVideoClient({
-          apiKey: STREAM_API_KEY,
-          user: {
-            id: user.id,
-            name: user.fullName,
-            image: user.imageUrl,
-          },
-          token: tokenData.token,
-        });
-
-        const callInstance = videoClient.call("default", callId);
-        await callInstance.join({ create: true });
-
-        setClient(videoClient);
-        setCall(callInstance);
-      } catch (error) {
-        console.log("Error init call:", error);
-        toast.error("Cannot connect to the call.");
-      } finally {
-        setIsConnecting(false);
-      }
-    };
-
-    initCall();
-  }, [tokenData, user, callId]);
-
-  if (isConnecting || !isLoaded) {
-    return <div className="h-screen flex justify-center items-center">Connecting to call...</div>;
-  }
+  if (!isLoaded) return null;
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center bg-gray-100">
-      <div className="relative w-full max-w-4xl mx-auto">
-        {client && call ? (
-          <StreamVideo client={client}>
-            <StreamCall call={call}>
-              <CallContent />
-            </StreamCall>
-          </StreamVideo>
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <p>Could not initialize call. Please refresh or try again later</p>
-          </div>
-        )}
-      </div>
-    </div>
+    <SentryRoutes>
+      {/* HOME */}
+      <Route
+        path="/"
+        element={isSignedIn ? <HomePage /> : <Navigate to="/auth" replace />}
+      />
+
+      {/* AUTH */}
+      <Route
+        path="/auth"
+        element={!isSignedIn ? <AuthPage /> : <Navigate to="/" replace />}
+      />
+
+      {/* CALL PAGE */}
+      <Route
+        path="/call/:id"
+        element={isSignedIn ? <CallPage /> : <Navigate to="/auth" replace />}
+      />
+
+      {/* 404 HANDLER */}
+      <Route
+        path="*"
+        element={
+          isSignedIn ? <Navigate to="/" replace /> : <Navigate to="/auth" replace />
+        }
+      />
+    </SentryRoutes>
   );
 };
 
-const CallContent = () => {
-  const { useCallCallingState } = useCallStateHooks();
+export default App;
 
-  const callingState = useCallCallingState();
-  const navigate = useNavigate();
 
-  if (callingState === CallingState.LEFT) return navigate("/");
+//first version of routing
 
-  return (
-    <StreamTheme>
-      <SpeakerLayout />
-      <CallControls />
-    </StreamTheme>
-  );
-};
+// return (
+//   <>
 
-export default CallPage;
+//     <SignedIn>
+//       <SentryRoutes>
+//         <Route path="/" element={<HomePage />} />
+//         <Route path="/auth" element={<Navigate to={"/"} replace />} />
+//       </SentryRoutes>
+//       <UserButton />
+//     </SignedIn>
+
+//     <SignedOut>
+//       <SentryRoutes>
+//         <Route path="/auth" element={<AuthPage />} />
+//         <Route path="*" element={<Navigate to={"/auth"} replace />} />
+//       </SentryRoutes>
+//     </SignedOut>
+//   </>
+// );
