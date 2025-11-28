@@ -5,7 +5,7 @@ import { useUser } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
 
 import { getStreamToken } from "../../lib/api";
- 
+
 import {
   StreamVideo,
   StreamVideoClient,
