@@ -13,7 +13,7 @@ import cors from "cors";
 
 const app = express();
 app.use(express.json()); //middleware to parse json body
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
 app.use(clerkMiddleware()); //req.auth property will be available
 
 app.use(clerkMiddleware({ secretKey: ENV.CLERK_SECRET_KEY }));
