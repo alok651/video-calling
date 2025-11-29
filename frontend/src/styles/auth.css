@@ -9,7 +9,7 @@
       #533483 75%,
       #7209b7 100%
     ),
-    radial-gradient(ellipse at top left, rgba(116, 58, 213, 0.17) 0%, transparent 50%),
+    radial-gradient(ellipse at top left, rgba(116, 58, 213, 0.15) 0%, transparent 50%),
     radial-gradient(ellipse at bottom right, rgba(74, 21, 75, 0.15) 0%, transparent 50%);
   position: relative;
   overflow: hidden;
