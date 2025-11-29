@@ -1,11 +1,13 @@
-import express from "express";
-import { protectRoute } from "../middleware/auth.middleware.js";
-import { getStreamToken } from '../controllers/chat.controller.js';
+import { generateStreamToken } from "../config/stream.js";
 
-const router = express.Router();
-
-
-router.get('/token',protectRoute, getStreamToken);
-
-
-export default router;
+export const getStreamToken = async (req, res) => {
+  try {
+    const token = generateStreamToken(req.auth().userId);
+    res.status(200).json({ token });
+  } catch (error) {
+    console.log("Error generating Stream token:", error);
+    res.status(500).json({
+      message: "Failed to generate Stream token",
+    });
+  }
+};
