@@ -1,63 +1,52 @@
-import "../instrument.mjs";
-import express from "express";
-import { ENV } from "./config/env.js";
-import { connectDB } from "./config/db.js";
-import { clerkMiddleware } from "@clerk/express";
-import { functions, inngest } from "./config/inngest.js";
-import { serve } from "inngest/express";
-import chatRoutes from "./routes/chat.route.js";
-
-import cors from "cors";
+import "../instrument.mjs"; //sentry monitoring
+import express from 'express'
+import {ENV} from './config/env.js';
+import { connectDB } from './config/db.js';
+import { clerkMiddleware } from '@clerk/express';
+import { clerkClient } from '@clerk/express';
+import { inngest , functions } from './config/inngest.js';
+import { serve } from 'inngest/express';
+import chatRoutes from './routes/chat.routes.js';
 import * as Sentry from "@sentry/node";
+import cors from "cors";
+
 
 const app = express();
+app.use(express.json()); //middleware to parse json body
+app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
+app.use(clerkMiddleware()); //req.auth property will be available
 
-// JSON body parsing
-app.use(express.json());
-
-// CORS (allow OPTIONS for preflight)
-app.use(
-  cors({
-    origin: ENV.CLIENT_URL,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  })
-);
-
-// Clerk middleware (req.auth available)
 app.use(clerkMiddleware({ secretKey: ENV.CLERK_SECRET_KEY }));
 
-// Sentry test route
-app.get("/debug-sentry", (req, res) => {
-  throw new Error("My first Sentry error!");
+app.get("/debug-sentry",(req,res)=>{
+    throw new Error("Sentry debug error!");
 });
 
-app.get("/", (req, res) => {
-  res.send("Hello World! 123");
+app.get('/', (req, res) => {
+    res.send('Hello World!');
 });
 
-// Inngest routes
-app.use("/api/inngest", serve({ client: inngest, functions }));
+app.use("/api/inngest", serve ({ client : inngest , functions})); 
+app.use("/api/chat",chatRoutes);  
 
-// Chat routes
-app.use("/api/chat", chatRoutes);
 
-// Sentry error handler
 Sentry.setupExpressErrorHandler(app);
 
-// DB connect and start server (optional listen for local dev)
-connectDB()
-  .then(() => {
-    console.log("DB connected");
-    if (ENV.NODE_ENV !== "production") {
-      app.listen(ENV.PORT, () => {
-        console.log(`Server running on port ${ENV.PORT}`);
-      });
-    }
-  })
-  .catch((err) => {
-    console.error("DB connection error:", err);
-  });
 
-// Export app for Vercel serverless
-export default app;
+const startServer = async () => {
+    try {
+        await connectDB();
+        if (ENV.NODE_ENV !== 'production') {
+            app.listen(ENV.PORT, () => {
+                
+                console.log("Server is running on port:" , ENV.PORT);
+            });
+        }} catch (error) {
+        console.error("Error starting server:", error);
+        process.exit(1); //1 means failure 0 means success
+    }};
+
+
+startServer();
+
+export default app; //for testing
