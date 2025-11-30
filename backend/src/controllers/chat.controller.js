@@ -1,13 +1,15 @@
-import { generateStreamToken } from '../config/stream.js';
+import { generateStreamToken } from "../config/stream.js";
 
-export const getStreamToken = (req, res) => {
-    try {
-        const token = generateStreamToken(req.auth().userId);
+export const getStreamToken = async (req, res) => {
+  try {
+    // req.auth.userId directly use karo
+    const token = generateStreamToken(req.auth.userId);
 
-        res.status(200).json({ token });
-    } catch (error) {
-        console.error("Error generating stream token:", error);
-        res.status(500).json({ message: "Failed to generate stream token " ,});
-    }
+    res.status(200).json({ token });
+  } catch (error) {
+    console.log("Error generating Stream token:", error);
+    res.status(500).json({
+      message: "Failed to generate Stream token",
+    });
+  }
 };
-//lets fix 
