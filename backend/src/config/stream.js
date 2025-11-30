@@ -1,45 +1,44 @@
-import {StreamChat} from 'stream-chat';
-import {ENV} from "../config/env.js";
+import { StreamChat } from "stream-chat";
+import { ENV } from "./env.js";
 
-
-const streamClient = StreamChat.getInstance(ENV.STREAM_API_KEY, ENV.STREAM_API_SECRET)
-
+const StreamClient = StreamChat.getInstance(
+  ENV.STREAM_API_KEY,
+  ENV.STREAM_API_SECRET
+);
 
 export const upsertStreamUser = async (userData) => {
-    try {
-        await streamClient.upsertUser(userData)
-        console.log('Stream user upserted successfully:',userData.name);
-        return userData
-    } catch (error) {
-        console.log("Stream user upsert error:", error);
-    }
+  try {
+    await StreamClient.upsertUser(userData);
+    console.log("Stream user upserted successfully", userData.name);
+  } catch (error) {
+    console.error("Error upserting Stream user:", error);
+  }
 };
 
 export const deleteStreamUser = async (userId) => {
-    try {
-        await streamClient.deleteUser(userId);
-        console.log('Stream user deleted successfully:',userId);
-
-    } catch (error) {
-        console.log("Stream user delete error:", error);
-    }
+  try {
+    await StreamClient.deleteUser(userId);
+    console.log("Stream user deleted successfully", userId);
+  } catch (error) {
+    console.error("Error deleting Stream user:", error);
+  }
 };
 
 export const generateStreamToken = (userId) => {
-    try {
-        const userIdString = userId.toString();
-        return streamClient.createToken(userIdString);
-    } catch (error) {
-        console.log("Stream token generation error:", error);
-        return null;
-    }
+  try {
+    const userIdString = userId.toString();
+    return StreamClient.createToken(userIdString);
+  } catch (error) {
+    console.error("Error generating Stream token:", error);
+    return null;
+  }
 };
 
-
-export const addUserToPublicChannels = async (newUserId) => {
-  const publicChannels = await streamClient.queryChannels({ discoverable: true });
-
+export const addUserToPublicChannel = async (userId) => {
+  const publicChannels = await StreamClient.queryChannels({
+    discoverable: true,
+  });
   for (const channel of publicChannels) {
-    await channel.addMembers([newUserId]);
+    await channel.addMembers([userId]);
   }
 };
