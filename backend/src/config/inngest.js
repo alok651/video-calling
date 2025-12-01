@@ -1,46 +1,43 @@
 import { Inngest } from "inngest";
 import { connectDB } from "./db.js";
-import { User } from "../models/user.model.js";
-import {  addUserToPublicChannels,deleteStreamUser, upsertStreamUser } from "./stream.js";
+import { User } from "../models/user.model.js"; // Import the User model
+import { addUserToPublicChannels, deleteStreamUser, upsertStreamUser } from "./stream.js";
 
-// Create Inngest client
-export const inngest = new Inngest({ id: "Whatsup" });
+// Create a client to send and receive events
+export const inngest = new Inngest({ id: "Whatsup"  });
 
-// Function: Sync user when created
 const syncUser = inngest.createFunction(
-  { name: "Sync User" },
+  { id: "sync-user" },
   { event: "clerk/user.created" },
   async ({ event }) => {
-    await connectDB(); // ensure DB connection
+    await connectDB();
 
     const { id, email_addresses, first_name, last_name, image_url } = event.data;
 
     const newUser = {
       clerkId: id,
-      email: email_addresses[0]?.email_address || "", // fallback if undefined
+      email: email_addresses[0]?.email_address,
       name: `${first_name || ""} ${last_name || ""}`,
       image: image_url,
     };
 
     await User.create(newUser);
 
-await upsertStreamUser({
-  id: newUser.clerkId.toString(),
-  name: newUser.name,
-  image: newUser.image,
-});
+    await upsertStreamUser({
+      id: newUser.clerkId.toString(),
+      name: newUser.name,
+      image: newUser.image,
+    });
 
- await addUserToPublicChannels(newUser.clerkId.toString());
+    await addUserToPublicChannels(newUser.clerkId.toString());
   }
 );
 
-// Function: Delete user when deleted
-const deleteUserFromDb = inngest.createFunction(
-  { id: "delete-User-From-Db" },
+const deleteUserFromDB = inngest.createFunction(
+  { id: "delete-user-from-db" },
   { event: "clerk/user.deleted" },
   async ({ event }) => {
     await connectDB();
-
     const { id } = event.data;
     await User.deleteOne({ clerkId: id });
 
@@ -48,5 +45,7 @@ const deleteUserFromDb = inngest.createFunction(
   }
 );
 
-// Export functions for Express / Vercel serverless
-export const functions = [syncUser, deleteUserFromDb];    
+// Create an empty array where we'll export future Inngest functions
+export const functions = [syncUser, deleteUserFromDB];
+
+
